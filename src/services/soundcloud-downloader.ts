@@ -11,7 +11,7 @@ import { downloadAudio } from "./audio-downloader";
 import { editMetadata } from "./metadata-editor";
 import { getTrackInfo } from "./track-info";
 
-export const downloadDir = path.join(os.homedir(), "Downloads", "SoundCloud");
+export const downloadDir = path.join(os.homedir(), "Downloads", "scdl");
 mkdirSync(downloadDir, { recursive: true });
 
 export async function processUrl(url: string): Promise<number> {
