@@ -1,141 +1,116 @@
 import { cancel, confirm, isCancel, text } from "@clack/prompts";
-import type {
-	CommonAlbumMetadata,
-	TrackInfo,
-	UserMetadata,
-} from "../types/index";
+
+import type { CommonAlbumMetadata, TrackInfo, UserMetadata } from "../types/index";
+
+const DEFAULT_GENRE = "Hip-Hop/Rap";
+
+function assertNotCancelled<T>(value: T | symbol): T {
+  if (isCancel(value)) {
+    cancel("Operation cancelled");
+    process.exit(0);
+  }
+  return value as T;
+}
 
 export async function promptMetadata(
-	track: TrackInfo,
-	commonMetadata?: CommonAlbumMetadata,
-	trackNumber?: number,
-	totalTracks?: number,
+  track: TrackInfo,
+  commonMetadata?: CommonAlbumMetadata,
+  trackNumber?: number,
+  totalTracks?: number,
 ): Promise<UserMetadata> {
-	const title = await text({
-		message: "Title:",
-		defaultValue: track.title,
-	});
+  const title = assertNotCancelled(
+    await text({
+      message: "Title:",
+      initialValue: track.title,
+      placeholder: track.title,
+    }),
+  );
 
-	if (isCancel(title)) {
-		cancel("Operation cancelled");
-		process.exit(0);
-	}
+  let artist: string, releaseDate: string, album: string;
 
-	// If common metadata exists, use it, otherwise ask
-	let artist: string, releaseDate: string, genre: string, album: string;
+  if (commonMetadata) {
+    artist = commonMetadata.artist;
+    releaseDate = commonMetadata.releaseDate;
+    album = commonMetadata.album;
+  } else {
+    artist = assertNotCancelled(
+      await text({
+        message: "Artist:",
+        initialValue: track.artist,
+        placeholder: track.artist,
+      }),
+    );
+    const defaultYear = track.year || new Date().getFullYear().toString();
+    releaseDate = assertNotCancelled(
+      await text({
+        message: "Release date (YYYY):",
+        initialValue: defaultYear,
+        placeholder: defaultYear,
+      }),
+    );
+    album = title;
+  }
 
-	if (commonMetadata) {
-		artist = commonMetadata.artist;
-		releaseDate = commonMetadata.releaseDate;
-		genre = commonMetadata.genre;
-		album = commonMetadata.album;
-	} else {
-		const artistPrompt = await text({
-			message: "Artist:",
-			defaultValue: track.artist,
-		});
+  const producerInput = assertNotCancelled(
+    await text({
+      message: "Producer/Composer (optional):",
+      placeholder: "Leave empty if not applicable",
+    }),
+  );
+  const producer = producerInput.trim() || undefined;
 
-		if (isCancel(artistPrompt)) {
-			cancel("Operation cancelled");
-			process.exit(0);
-		}
+  const trackNumberString =
+    trackNumber && totalTracks ? `${trackNumber}/${totalTracks}` : undefined;
 
-		const releaseDatePrompt = await text({
-			message: "Release date (YYYY):",
-			defaultValue: track.year || new Date().getFullYear().toString(),
-		});
-
-		if (isCancel(releaseDatePrompt)) {
-			cancel("Operation cancelled");
-			process.exit(0);
-		}
-
-		artist = artistPrompt as string;
-		releaseDate = releaseDatePrompt as string;
-		genre = "Hip-Hop/Rap";
-		album = title as string; // Album = title for individual tracks
-	}
-
-	const producer = await text({
-		message: "Producer/Composer (optional):",
-		placeholder: "Leave empty if not applicable",
-	});
-
-	if (isCancel(producer)) {
-		cancel("Operation cancelled");
-		process.exit(0);
-	}
-
-	const trimmedProducer = producer && (producer as string).trim();
-
-	// Generate track number for album mode
-	const trackNumberString =
-		trackNumber && totalTracks ? `${trackNumber}/${totalTracks}` : undefined;
-
-	return {
-		title: title as string,
-		artist,
-		releaseDate,
-		genre,
-		album,
-		...(trimmedProducer && { producer: trimmedProducer }),
-		...(trackNumberString && { trackNumber: trackNumberString }),
-	};
+  return {
+    title,
+    artist,
+    releaseDate,
+    genre: DEFAULT_GENRE,
+    album,
+    ...(producer && { producer }),
+    ...(trackNumberString && { trackNumber: trackNumberString }),
+  };
 }
 
 export async function promptForAlbumMode(): Promise<boolean> {
-	const isAlbum = await confirm({
-		message:
-			"Do you want to apply the same album name and artist for all tracks in the playlist?",
-		initialValue: true,
-	});
-
-	if (isCancel(isAlbum)) {
-		cancel("Operation cancelled");
-		process.exit(0);
-	}
-
-	return isAlbum as boolean;
+  return assertNotCancelled(
+    await confirm({
+      message:
+        "Do you want to apply the same album name and artist for all tracks in the playlist?",
+      initialValue: true,
+    }),
+  );
 }
 
 export async function promptCommonAlbumMetadata(
-	firstTrack: TrackInfo,
+  firstTrack: TrackInfo,
 ): Promise<CommonAlbumMetadata> {
-	const album = await text({
-		message: "Album name:",
-		defaultValue:
-			firstTrack.album || `${firstTrack.artist} - ${firstTrack.title}`,
-	});
+  const defaultAlbum = firstTrack.album || `${firstTrack.artist} - ${firstTrack.title}`;
+  const album = assertNotCancelled(
+    await text({
+      message: "Album name:",
+      initialValue: defaultAlbum,
+      placeholder: defaultAlbum,
+    }),
+  );
 
-	if (isCancel(album)) {
-		cancel("Operation cancelled");
-		process.exit(0);
-	}
+  const artist = assertNotCancelled(
+    await text({
+      message: "Artist:",
+      initialValue: firstTrack.artist,
+      placeholder: firstTrack.artist,
+    }),
+  );
 
-	const artist = await text({
-		message: "Artist:",
-		defaultValue: firstTrack.artist,
-	});
+  const defaultYear = firstTrack.year || new Date().getFullYear().toString();
+  const releaseDate = assertNotCancelled(
+    await text({
+      message: "Release date (YYYY):",
+      initialValue: defaultYear,
+      placeholder: defaultYear,
+    }),
+  );
 
-	if (isCancel(artist)) {
-		cancel("Operation cancelled");
-		process.exit(0);
-	}
-
-	const releaseDate = await text({
-		message: "Release date (YYYY):",
-		defaultValue: firstTrack.year || new Date().getFullYear().toString(),
-	});
-
-	if (isCancel(releaseDate)) {
-		cancel("Operation cancelled");
-		process.exit(0);
-	}
-
-	return {
-		album: album as string,
-		artist: artist as string,
-		releaseDate: releaseDate as string,
-		genre: "Hip-Hop/Rap",
-	};
+  return { album, artist, releaseDate, genre: DEFAULT_GENRE };
 }

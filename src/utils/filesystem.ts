@@ -1,6 +1,7 @@
 export function sanitizeFilename(filename: string): string {
-	return filename
-		.replace(/[<>:"/\\|?*]/g, "_")
-		.replace(/\s+/g, " ")
-		.trim();
+  return filename
+    .replace(/[<>:"/\\|?*]/g, "_")
+    .replace(/\.\.+/g, "_")
+    .replace(/\s+/g, " ")
+    .trim();
 }

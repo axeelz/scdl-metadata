@@ -1,24 +1,25 @@
 {
-	"name": "scdl-metadata",
-	"module": "src/index.ts",
-	"type": "module",
-	"private": true,
-	"devDependencies": {
-		"@biomejs/biome": "2.0.6",
-		"@types/bun": "latest",
-		"@types/fs-extra": "^11.0.4"
-	},
-	"peerDependencies": {
-		"typescript": "^5"
-	},
-	"dependencies": {
-		"@clack/prompts": "^0.11.0",
-		"axios": "^1.10.0",
-		"fs-extra": "^11.3.0",
-		"node-id3": "^0.2.9"
-	},
-	"scripts": {
-		"start": "bun run src/index.ts",
-		"lint": "biome check --write"
-	}
+  "name": "scdl-metadata",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "bun run src/index.ts",
+    "lint": "oxlint",
+    "lint:fix": "oxlint --fix",
+    "fmt": "oxfmt",
+    "fmt:check": "oxfmt --check",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@clack/prompts": "^1.0.1",
+    "node-id3": "^0.2.9"
+  },
+  "devDependencies": {
+    "@types/bun": "1.3.9",
+    "oxfmt": "^0.35.0",
+    "oxlint": "^1.50.0"
+  },
+  "peerDependencies": {
+    "typescript": "^5.9.3"
+  }
 }
